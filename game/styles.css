@@ -260,3 +260,4 @@ body[data-event="nye"] { --pink: #ffd23f; }
   .race-live { top: auto; bottom: 250px; right: 8px; }
   .checkin-chip { top: 150px; }
 }
+.disclaimer { margin: 0; text-align: center; font-size: 11px; }
