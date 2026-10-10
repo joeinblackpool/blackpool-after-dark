@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Blackpool After Dark</title>
+  <meta name="theme-color" content="#07060d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ============ START SCREEN ============ -->
+  <section id="screen-start" class="screen active">
+    <div class="bg-glow"></div>
+    <div class="start-card glass">
+      <div id="event-banner" class="event-banner hidden"></div>
+
+      <button id="btn-profile" class="profile-bar" type="button">
+        <span class="lvl" id="pb-level">1</span>
+        <span class="pb-main">
+          <b id="pb-title">Lightweight</b>
+          <span class="xpbar"><span id="pb-xp"></span></span>
+        </span>
+        <span class="pb-streak" id="pb-streak">🔥 0</span>
+      </button>
+
+      <p class="eyebrow">Nightlife GeoGuessr</p>
+      <h1 class="logo">BLACKPOOL<br><span>AFTER DARK</span></h1>
+
+      <div class="field">
+        <span>Pick a game</span>
+        <div class="game-grid" id="game-picker">
+          <button type="button" class="gcard active" data-game="daily"><b>📅 Daily Challenge</b><small id="daily-sub">3 venues, same for everyone today</small></button>
+          <button type="button" class="gcard" data-game="quick"><b>🍸 Quick Crawl</b><small>5 random venues</small></button>
+          <button type="button" class="gcard" data-game="crawl"><b>🚶 Pub Crawl</b><small>A walking route. Each find reveals the next clue</small></button>
+          <button type="button" class="gcard" data-game="race"><b>🏁 Race Friends</b><small>Same venues, live leaderboard</small></button>
+        </div>
+      </div>
+
+      <div id="race-box" class="race-box hidden">
+        <div class="row">
+          <input id="race-code" class="code-input" maxlength="5" placeholder="CODE" autocomplete="off">
+          <button id="btn-race-new" class="btn btn-small btn-ghost" type="button">New code</button>
+        </div>
+        <p id="race-note" class="small"></p>
+      </div>
+
+      <div class="field">
+        <span>How are you playing?</span>
+        <div class="segmented" id="mode-picker">
+          <button type="button" class="seg active" data-mode="home"><b>At home</b><small>Walk Street View with taps and arrow keys</small></button>
+          <button type="button" class="seg" data-mode="street"><b>On the street</b><small>GPS, compass and camera. Walk to the venue for real</small></button>
+        </div>
+      </div>
+
+      <label class="field" id="district-field">
+        <span>Where are we drinking?</span>
+        <select id="district-select"><option value="all">All of Blackpool (40 venues)</option></select>
+      </label>
+
+      <button id="btn-start" class="btn btn-primary">Start</button>
+      <div class="row">
+        <button id="btn-settings" class="btn btn-ghost">Settings</button>
+        <button id="btn-install" class="btn btn-ghost hidden">Install app</button>
+      </div>
+
+      <p id="mode-badge" class="mode-badge"></p>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-card glass">
+      <h2>Settings</h2>
+      <label class="field">
+        <span>Google Maps API key</span>
+        <input id="input-key" type="password" placeholder="AIza..." autocomplete="off">
+      </label>
+      <p class="small">Turns on live Street View. Saved only in this browser. Without a key the game runs in Clue Mode.</p>
+      <label class="field">
+        <span>Seconds per round</span>
+        <input id="input-time" type="number" min="30" max="600" step="10">
+      </label>
+      <div class="row">
+        <button id="btn-save-settings" class="btn btn-primary">Save</button>
+        <button id="btn-close-settings" class="btn btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PROFILE ============ -->
+  <div id="modal-profile" class="modal hidden">
+    <div class="modal-card glass profile-card">
+      <div class="row-between">
+        <h2>Your profile</h2>
+        <button id="btn-close-profile" class="btn btn-small btn-ghost">Close</button>
+      </div>
+      <label class="field">
+        <span>Your name (shown in races)</span>
+        <input id="input-name" maxlength="20" placeholder="Player">
+      </label>
+      <div class="stats-grid" id="profile-stats"></div>
+      <p class="eyebrow">Badges</p>
+      <div class="badge-grid" id="badge-grid"></div>
+    </div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <section id="screen-game" class="screen">
+    <video id="camera" class="camera hidden" autoplay playsinline muted></video>
+    <div id="pano"></div>
+    <div id="street-fallback" class="street-fallback hidden">
+      <p class="eyebrow">On the street</p>
+      <p>Follow the scanner. Turn the camera on to see the street through it.</p>
+    </div>
+
+    <div id="clue-mode" class="clue-mode hidden">
+      <div class="dossier glass">
+        <p class="eyebrow">Clue Mode</p>
+        <h2 id="dossier-type"></h2>
+        <p id="dossier-clue" class="dossier-clue"></p>
+        <p class="small">Add a Google Maps key in Settings to play with live Street View and the scanner.</p>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <header class="hud glass">
+      <div class="hud-item"><span class="lbl">Round</span><b id="hud-round">1/5</b></div>
+      <div class="hud-item"><span class="lbl">Score</span><b id="hud-score">0</b></div>
+      <div class="hud-item"><span class="lbl">Time</span><b id="hud-timer">2:00</b></div>
+    </header>
+
+    <!-- Scanner -->
+    <div id="scanner" class="scanner glass">
+      <div class="radar">
+        <div class="sweep"></div>
+        <div id="radar-blip" class="blip"></div>
+        <div class="reticle"></div>
+      </div>
+      <div class="scan-info">
+        <p class="eyebrow">Venue scanner</p>
+        <div class="signal"><div id="signal-bar"></div></div>
+        <p id="scan-status" class="scan-status">Look around. The signal gets stronger as you face the venue.</p>
+      </div>
+    </div>
+
+    <!-- Movement & AR tools -->
+    <div class="tools">
+      <button id="btn-return" class="btn btn-small btn-ghost glass">Back to start</button>
+      <button id="btn-camera" class="btn btn-small btn-ghost glass hidden">Camera on</button>
+      <label id="blend-wrap" class="blend glass hidden">
+        <span>Street View</span>
+        <input id="blend" type="range" min="0" max="100" value="45">
+      </label>
+      <span id="gps-chip" class="chip glass hidden">GPS: waiting</span>
+    </div>
+
+    <button id="checkin-chip" class="checkin-chip hidden" type="button"></button>
+    <div id="race-live" class="race-live glass hidden"></div>
+
+    <div id="scan-lock" class="scan-lock hidden">
+      <div class="lock-ring"></div>
+      <p>TARGET LOCKED</p>
+    </div>
+
+    <!-- Intel / hints -->
+    <aside class="intel glass">
+      <p class="eyebrow">Intel</p>
+      <ul id="intel-list"></ul>
+      <button id="btn-hint" class="btn btn-small">Buy hint (-25%)</button>
+    </aside>
+
+    <!-- Guess map -->
+    <div id="guess-wrap" class="guess-wrap">
+      <div id="guess-map"></div>
+      <div class="guess-actions">
+        <button id="btn-toggle-map" class="btn btn-small btn-ghost">Map</button>
+        <button id="btn-here" class="btn btn-small btn-ghost hidden">I'm here</button>
+        <button id="btn-guess" class="btn btn-primary" disabled>Drop a pin</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ROUND RESULT ============ -->
+  <section id="screen-result" class="screen">
+    <div id="result-map"></div>
+    <div class="result-card glass">
+      <p class="eyebrow" id="res-rating">Perfect</p>
+      <h2 id="res-name"></h2>
+      <p id="res-meta" class="small"></p>
+      <div class="res-stats">
+        <div><span class="lbl">Distance</span><b id="res-distance"></b></div>
+        <div><span class="lbl">Points</span><b id="res-points"></b></div>
+      </div>
+      <div class="scorebar"><div id="res-bar"></div></div>
+      <p id="res-open" class="open-chip"></p>
+      <div id="res-next" class="next-clue hidden"></div>
+      <div id="res-board" class="board hidden"></div>
+      <button id="btn-next" class="btn btn-primary">Next venue</button>
+    </div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section id="screen-final" class="screen">
+    <div class="bg-glow"></div>
+    <div class="start-card glass">
+      <p class="eyebrow">Last orders</p>
+      <h1 class="logo"><span id="final-score">0</span></h1>
+      <p id="final-sub" class="tagline"></p>
+      <ol id="final-list" class="final-list"></ol>
+      <div id="final-xp" class="final-xp"></div>
+      <div id="final-badges" class="final-badges"></div>
+      <div id="final-board" class="board hidden"></div>
+      <button id="btn-share" class="btn btn-ghost">Copy result</button>
+      <button id="btn-again" class="btn btn-primary">Play again</button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="progress.js"></script>
+  <script src="race.js"></script>
+  <script src="game.js"></script>
+  <script>
+    // Offline cache + "Install app" (only over https or localhost, not file://)
+    if ("serviceWorker" in navigator && location.protocol !== "file:" && !window.Capacitor) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+    let installPrompt = null;
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      installPrompt = e;
+      document.getElementById("btn-install").classList.remove("hidden");
+    });
+    document.getElementById("btn-install").addEventListener("click", async () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      document.getElementById("btn-install").classList.add("hidden");
+    });
+  </script>
+</body>
+</html>

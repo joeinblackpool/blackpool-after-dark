@@ -1,0 +1,9 @@
+{
+  "appId": "com.blackpoolafterdark.game",
+  "appName": "Blackpool After Dark",
+  "webDir": "www",
+  "backgroundColor": "#07060d",
+  "android": {
+    "allowMixedContent": false
+  }
+}
