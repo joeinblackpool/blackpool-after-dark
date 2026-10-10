@@ -1,15 +1,15 @@
-# Publishes the web game in game/ to GitHub Pages on every push to main.
+# Publishes the web game in game/ to the gh-pages branch on every push to main.
+# GitHub Pages serves that branch at nintendo.org.uk (and joeinblackpool.github.io/blackpool-after-dark).
 name: Publish game website
 
 on:
   push:
     branches: [main]
+    paths: ["game/**", ".github/workflows/deploy-pages.yml"]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -18,14 +18,13 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Add custom domain
+        run: |
+          echo "nintendo.org.uk" > game/CNAME
+          touch game/.nojekyll
+      - uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: game
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          folder: game
+          branch: gh-pages
