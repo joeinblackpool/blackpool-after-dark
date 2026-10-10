@@ -1,5 +1,5 @@
 # Publishes the web game in game/ to the gh-pages branch on every push to main.
-# GitHub Pages serves that branch at nintendo.org.uk (and joeinblackpool.github.io/blackpool-after-dark).
+# GitHub Pages serves that branch at https://joeinblackpool.github.io/blackpool-after-dark/
 name: Publish game website
 
 on:
@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Add custom domain
-        run: |
-          echo "nintendo.org.uk" > game/CNAME
-          touch game/.nojekyll
+      # To serve at nintendo.org.uk once its DNS points at GitHub, put the line below back:
+      #   echo "nintendo.org.uk" > game/CNAME
+      - name: Prepare site
+        run: touch game/.nojekyll
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: game
