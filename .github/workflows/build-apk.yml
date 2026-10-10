@@ -6,6 +6,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -38,3 +41,17 @@ jobs:
         with:
           name: blackpool-after-dark-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      # Phone-friendly download link that always points at the newest build:
+      # https://github.com/joeinblackpool/blackpool-after-dark/releases/latest/download/blackpool-after-dark.apk
+      - name: Publish APK as the latest release
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk blackpool-after-dark.apk
+          gh release delete android-latest --yes --cleanup-tag || true
+          gh release create android-latest blackpool-after-dark.apk \
+            --title "Blackpool After Dark (Android)" \
+            --notes "Newest Android build. On your phone, open this page, tap blackpool-after-dark.apk, then allow installing apps from your browser when asked." \
+            --latest
+        env:
+          GH_TOKEN: ${{ github.token }}
